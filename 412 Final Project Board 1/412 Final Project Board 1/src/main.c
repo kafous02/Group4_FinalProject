@@ -128,7 +128,11 @@ void bot_move_O_random(void);
 void bot_X_move(void);
 void bot_O_move(void);
 bool add_turn_move(unsigned char PBInput, unsigned char PCInput, int turn);
-void launch_pvp_game();
+void launch_pvp_game(void);
+bool add_player_move(int move, int turn);
+void launch_pvp_game(void);
+void launch_pvb_game(void);
+void launch_bvb_game(void);
 
 void add_move(movelist ml) {
 		gamestate = gamestate + ml;
@@ -150,6 +154,8 @@ bool add_player_move(int move, int turn) {
 	
 	if((check_move(ml1) == false) && (check_move(ml2) == false)) {
 			gamestate = gamestate + ml1;
+			check_full_board();
+			
 			return true;
 	}
 
@@ -196,109 +202,23 @@ void print_win() {
 void bot_move_X_random() {
 
 	bool randmovefound = false;
+	int currentrand;
 
-	while (!randmovefound) {
+	do {
+		currentrand = rand() % 9;
+	}while(!add_player_move(currentrand,0));
 
-		int currentrand = rand() % 9;
-
-		movelist OMove = Omoves[currentrand];
-		movelist XMove = Xmoves[currentrand];
-
-			if(add_player_move(XMove, 0)) {
-				randmovefound = true;
-			}
-		}
 	return;
 }
-
-
-movelist OMove;
-movelist XMove; 
-int currentrand;
 
 void bot_move_O_random() {
 
 	bool randmovefound = false;
+	int currentrand;
 
-
-	while (!randmovefound) {
-
+	do {
 		currentrand = rand() % 9;
-
-		OMove = Omoves[currentrand];
-		XMove = Xmoves[currentrand];
-
-		if((check_move(OMove) == false) &&  (check_move(XMove) == false)) {
-			if(add_player_move(OMove,1)) {
-				randmovefound = true;
-				break;
-			}
-		}
-	}
-	return;
-}
-
-void bot_X_move() {
-
-	bool hasmoved = false;
-
-	for (int iter1 = 0; iter1 < AllMovesLength; iter1++) {
-
-		movelist potentialmove = allmoves[iter1];
-
-		check_full_board();
-
-		if (XWins) {
-			add_player_move(potentialmove,0);
-			hasmoved = true;
-			break;
-		}
-		else if (OWins) {
-			movelist Xoffset = allmoves[iter1 - 9];
-			add_player_move(Xoffset, 0);
-			hasmoved = true;
-			break;
-		}
-	}
-
-	if (!hasmoved) {
-		bot_move_X_random();
-	}
-
-	return;
-}
-
-void bot_O_move() {
-
-	bool hasmoved = false;
-
-	/*
-	for (int iter1 = 0; iter1 < AllMovesLength; iter1++) {
-
-		movelist potentialmove = allmovesrev[iter1];
-
-		check_full_board();
-
-		if (OWins) {
-			if(add_player_move(potentialmove,1)) {
-				hasmoved = true;
-				break;
-			}
-			
-		}
-		else if (XWins) {
-			movelist Xoffset = allmoves[iter1 - 9];
-			if(add_player_move(Xoffset,1)) {
-				hasmoved = true;
-				break;
-			}
-
-		}
-	}
-	*/
-	//if (!hasmoved) {
-		bot_move_O_random();
-	//}
+		}while(!add_player_move(currentrand,1));
 
 	return;
 }
@@ -611,11 +531,10 @@ void launch_bvb_game(void) {
 	int moveloop = 0;
 	
 	while(true) {
-		moveloop = moveloop % 2;
-		if(collect_move(moveloop)) {
-			moveloop++;
-
-		}
+		bot_move_X_random();
+		USART_Communicate_Boardstate(gamestate);
+		_delay_ms(10000);
+		bot_move_O_random();
 		USART_Communicate_Boardstate(gamestate);
 		_delay_ms(10000);
 	}
@@ -640,7 +559,7 @@ int main (void)
 	board_init();	
 	USART_Init(MYUBRR);
 	flash_led_short();
-	launch_pvb_game();
+	launch_bvb_game();
 	
 	
 }
