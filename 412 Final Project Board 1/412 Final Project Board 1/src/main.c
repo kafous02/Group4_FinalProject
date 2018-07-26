@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define F_CPU = 8000000UL;
 
@@ -127,6 +128,7 @@ void bot_move_O_random(void);
 void bot_X_move(void);
 void bot_O_move(void);
 bool add_turn_move(unsigned char PBInput, unsigned char PCInput, int turn);
+void launch_pvp_game();
 
 void add_move(movelist ml) {
 		gamestate = gamestate + ml;
@@ -138,7 +140,7 @@ bool add_player_move(int move, int turn) {
 	int offset = 0;
 	
 	if(turn == 1) {
-		offset= 9;
+		offset = 9;
 	}
 	
 	int index = move + offset;
@@ -202,28 +204,35 @@ void bot_move_X_random() {
 		movelist OMove = Omoves[currentrand];
 		movelist XMove = Xmoves[currentrand];
 
-		if (!((check_move(OMove)) && (check_move(XMove)))) {
-			add_move(XMove);
-			randmovefound = true;
+			if(add_player_move(XMove, 0)) {
+				randmovefound = true;
+			}
 		}
-	}
 	return;
 }
+
+
+movelist OMove;
+movelist XMove; 
+int currentrand;
 
 void bot_move_O_random() {
 
 	bool randmovefound = false;
 
+
 	while (!randmovefound) {
 
-		int currentrand = rand() % 9;
+		currentrand = rand() % 9;
 
-		movelist OMove = Omoves[currentrand];
-		movelist XMove = Xmoves[currentrand];
+		OMove = Omoves[currentrand];
+		XMove = Xmoves[currentrand];
 
-		if (!((check_move(OMove)) && (check_move(XMove)))) {
-			add_move(OMove);
-			randmovefound = true;
+		if((check_move(OMove) == false) &&  (check_move(XMove) == false)) {
+			if(add_player_move(OMove,1)) {
+				randmovefound = true;
+				break;
+			}
 		}
 	}
 	return;
@@ -240,13 +249,13 @@ void bot_X_move() {
 		check_full_board();
 
 		if (XWins) {
-			add_move(potentialmove);
+			add_player_move(potentialmove,0);
 			hasmoved = true;
 			break;
 		}
 		else if (OWins) {
 			movelist Xoffset = allmoves[iter1 - 9];
-			add_move(Xoffset);
+			add_player_move(Xoffset, 0);
 			hasmoved = true;
 			break;
 		}
@@ -263,6 +272,7 @@ void bot_O_move() {
 
 	bool hasmoved = false;
 
+	/*
 	for (int iter1 = 0; iter1 < AllMovesLength; iter1++) {
 
 		movelist potentialmove = allmovesrev[iter1];
@@ -270,21 +280,25 @@ void bot_O_move() {
 		check_full_board();
 
 		if (OWins) {
-			add_move(potentialmove);
-			hasmoved = true;
-			break;
+			if(add_player_move(potentialmove,1)) {
+				hasmoved = true;
+				break;
+			}
+			
 		}
 		else if (XWins) {
 			movelist Xoffset = allmoves[iter1 - 9];
-			add_move(Xoffset);
-			hasmoved = true;
-			break;
+			if(add_player_move(Xoffset,1)) {
+				hasmoved = true;
+				break;
+			}
+
 		}
 	}
-
-	if (!hasmoved) {
+	*/
+	//if (!hasmoved) {
 		bot_move_O_random();
-	}
+	//}
 
 	return;
 }
@@ -562,7 +576,37 @@ bool add_turn_move(unsigned char PBInput, unsigned char PCInput, int turn) {
 		}
 }
 
-void launch_game(void) {
+void launch_pvp_game(void) {
+	
+	int moveloop = 0;
+	
+	while(true) {
+		moveloop = moveloop % 2;
+		if(collect_move(moveloop)) {
+			moveloop++;
+
+		}
+		USART_Communicate_Boardstate(gamestate);
+		_delay_ms(10000);
+	}
+}
+
+void launch_pvb_game(void) {
+	
+	int moveloop = 0;
+	
+	while(true) {
+
+		bool ret = collect_move(moveloop);
+		USART_Communicate_Boardstate(gamestate);
+		_delay_ms(10000);
+		bot_move_O_random();
+		USART_Communicate_Boardstate(gamestate);
+		_delay_ms(10000);
+	}
+}
+
+void launch_bvb_game(void) {
 	
 	int moveloop = 0;
 	
@@ -592,53 +636,11 @@ void test_USART() {
 int main (void)
 {
 	/* Insert system clock initialization code here (sysclk_init()). */
-
+	srand(time(0));
 	board_init();	
 	USART_Init(MYUBRR);
 	flash_led_short();
-	launch_game();
+	launch_pvb_game();
 	
-	//launch_game();
 	
-	//collect_move(0);
-	
-	//USART_Communicate_Boardstate(gamestate);
-	
-	//PORTB = 0xff;
-    //DDRB &= ~32; //Specifies port b pin 5 as input from button
-    //DDRC &= ~35;
-    //static int counter = 0;
-    //static int toggle = 0;
-    //LightRed();
-	
-	/*
-	long GameState1 = 1;
-	long GameState2 = 2;
-
-    while(1)
-    {
-        if((PINB & 32) == 32)
-        {
-            switch(toggle){
-                case 0:
-                   toggle++;
-                   break;
-                case 1:
-                   toggle++;
-				   USART_Communicate_Boardstate(GameState1);
-				   	_delay_ms(5000);
-				   //PORTB = 0xff;
-                   break;
-                case 2:
-                   toggle = 0;
-				   USART_Communicate_Boardstate(GameState2);
-				   	_delay_ms(5000);
-					//PORTB = 0xff;
-                   break;
-            }
-        }
-    }
-	
-	*/
-	//test_USART();
 }
