@@ -129,9 +129,27 @@ void bot_O_move(void);
 void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn);
 
 void add_move(movelist ml) {
-	if((gamestate & ml) != 1) {
 		gamestate = gamestate + ml;
+	return;
+}
+
+void add_player_move(int move, int turn) {
+	
+	int offset = 0;
+	
+	if(turn == 1) {
+		offset= 9;
 	}
+	
+	int index = move + offset;
+	
+	movelist ml1 = allmoves[index];
+	movelist ml2 = allmoves[((index + 9) % 18)];
+	
+	if((check_move(ml1) == false) && (check_move(ml2) == false)) {
+			gamestate = gamestate + ml1;
+	}
+
 	return;
 }
 
@@ -406,7 +424,7 @@ void collect_move(int turn) {
 		PCInput = ((PINC - 64) & 35);
 
 		if((PBInput != 0) || (PCInput != 0)) {
-			//hasnotentered = false;
+			hasnotentered = false;
 		}
 	}
 	
@@ -417,74 +435,74 @@ void collect_move(int turn) {
 void add_turn_move(unsigned char PBInput, unsigned char PCInput, int turn) {
 		if((PBInput & 1) == 1) {
 			if(turn == 0) {
-				add_move(O0);
+				add_player_move(0,0);
 			}
 			else {
-				add_move(X0);
+				add_player_move(0,1);
 			}
 		}
 		else if((PBInput & 2) == 2) {
 			if(turn == 0) {
-				add_move(O1);
+				add_player_move(1,0);
 			}
 			else {
-				add_move(X1);
+				add_player_move(1,1);
 			}
 		}
 		else if((PBInput & 4) == 4) {
 			if(turn == 0) {
-				add_move(O2);
+				add_player_move(2,0);
 			}
 			else {
-				add_move(X2);
+				add_player_move(2,1);
 			}
 		}
 		else if((PBInput & 8) == 8) {
 			if(turn == 0) {
-				add_move(O3);
+				add_player_move(3,0);
 			}
 			else {
-				add_move(X3);
+				add_player_move(3,1);
 			}
 		}
 		else if((PBInput & 16) == 16) {
 			if(turn == 0) {
-				add_move(O4);
+				add_player_move(4,0);
 			}
 			else {
-				add_move(X4);
+				add_player_move(4,1);
 			}
 		}
 		else if((PBInput & 32) == 32) {
 			if(turn == 0) {
-				add_move(O5);
+				add_player_move(5,0);
 			}
 			else {
-				add_move(X5);
+				add_player_move(5,1);
 			}
 		}
-		else if((PCInput & 16) == 16) {
+		else if((PCInput & 2) == 2) {
 			if(turn == 0) {
-				add_move(O6);
+				add_player_move(6,0);
 			}
 			else {
-				add_move(X6);
+				add_player_move(6,1);
 			}
 		}
 		else if((PCInput & 32) == 32) {
 			if(turn == 0) {
-				add_move(O7);
+				add_player_move(7,0);
 			}
 			else {
-				add_move(X7);
+				add_player_move(7,1);
 			}
 		}
 		else if((PCInput & 1) == 1) {
 			if(turn == 0) {
-				add_move(O8);
+				add_player_move(8,0);
 			}
 			else {
-				add_move(X8);
+				add_player_move(8,1);
 			}
 		}
 }
@@ -492,13 +510,14 @@ void add_turn_move(unsigned char PBInput, unsigned char PCInput, int turn) {
 void launch_game(void) {
 	
 	int moveloop = 0;
-	USART_Init(MYUBRR);
 	
 	while(true) {
 		moveloop = moveloop % 2;
 		collect_move(moveloop);
 		USART_Communicate_Boardstate(gamestate);
 		moveloop++;
+		
+		_delay_ms(10000);
 	}
 }
 
@@ -521,10 +540,14 @@ int main (void)
 	board_init();	
 	USART_Init(MYUBRR);
 	flash_led_short();
-
+	launch_game();
+	
 	//launch_game();
 	
-	collect_move(0);
+	//collect_move(0);
+	
+	//USART_Communicate_Boardstate(gamestate);
+	
 	//PORTB = 0xff;
     //DDRB &= ~32; //Specifies port b pin 5 as input from button
     //DDRC &= ~35;
