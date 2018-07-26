@@ -196,7 +196,7 @@ int main (void)
 
 	board_init();	
 	USART_Init(MYUBRR);
-	flash_led_short();
+	//flash_led_short();
 	
 	launch_game();
 }

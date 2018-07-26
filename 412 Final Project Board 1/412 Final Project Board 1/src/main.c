@@ -288,6 +288,7 @@ void flash_led(void) {
 void flash_led_short(void) {
 	
 	DDRB = 0xff;
+	DDRC = 0xff;
 
 	int count = 0;
 
@@ -298,6 +299,8 @@ void flash_led_short(void) {
 		_delay_ms(5000);
 		count++;
 	}
+			PORTC = 0;
+
 }
 
 void USART_Init( unsigned int ubrr){
@@ -341,7 +344,7 @@ void USART_Communicate_Boardstate(unsigned long input) {
 	
 	Split_Long(input);
 
-	flash_led_short();
+	//flash_led_short();
 	
 	//unsigned char transmission_confirm1 = USART_Receive();
 	USART_Transmit(P1);
@@ -387,32 +390,32 @@ void Test_Split_Long(void) {
 	}
 }
 
-void collect_move(int turn) {
+unsigned char PBInput = 0;
+unsigned char PCInput = 0;
 	
-	unsigned char PD5to7 = 0;
-	unsigned char PB0to5 = 0;
+void collect_move(int turn) {
 	
 	bool hasnotentered = true;
 	
-	DDRB = 0x00;
-	DDRD &= 0x3f;
+	
+	int count = 1;
+	
 		
 	while (hasnotentered) {
-		
-		PD5to7 = (PIND & 192);
-		PB0to5 = (PINB & 63);
+		PBInput = (PINB & 63);
+		PCInput = ((PINC - 64) & 35);
 
-		if((PD5to7 != 0) || (PB0to5 != 0)) {
-			hasnotentered = false;
+		if((PBInput != 0) || (PCInput != 0)) {
+			//hasnotentered = false;
 		}
 	}
 	
-	add_turn_move(PD5to7, PB0to5, turn);
+	add_turn_move(PBInput, PCInput, turn);
 	
 }
 
-void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn) {
-		if((PD2to7 & 1) == 1) {
+void add_turn_move(unsigned char PBInput, unsigned char PCInput, int turn) {
+		if((PBInput & 1) == 1) {
 			if(turn == 0) {
 				add_move(O0);
 			}
@@ -420,7 +423,7 @@ void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn) {
 				add_move(X0);
 			}
 		}
-		else if((PD2to7 & 2) == 1) {
+		else if((PBInput & 2) == 2) {
 			if(turn == 0) {
 				add_move(O1);
 			}
@@ -428,7 +431,7 @@ void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn) {
 				add_move(X1);
 			}
 		}
-		else if((PD2to7 & 4) == 1) {
+		else if((PBInput & 4) == 4) {
 			if(turn == 0) {
 				add_move(O2);
 			}
@@ -436,7 +439,7 @@ void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn) {
 				add_move(X2);
 			}
 		}
-		else if((PD2to7 & 8) == 1) {
+		else if((PBInput & 8) == 8) {
 			if(turn == 0) {
 				add_move(O3);
 			}
@@ -444,7 +447,7 @@ void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn) {
 				add_move(X3);
 			}
 		}
-		else if((PD2to7 & 16) == 1) {
+		else if((PBInput & 16) == 16) {
 			if(turn == 0) {
 				add_move(O4);
 			}
@@ -452,7 +455,7 @@ void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn) {
 				add_move(X4);
 			}
 		}
-		else if((PD2to7 & 32) == 1) {
+		else if((PBInput & 32) == 32) {
 			if(turn == 0) {
 				add_move(O5);
 			}
@@ -460,7 +463,7 @@ void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn) {
 				add_move(X5);
 			}
 		}
-		else if((PB0to2 & 1) == 1) {
+		else if((PCInput & 16) == 16) {
 			if(turn == 0) {
 				add_move(O6);
 			}
@@ -468,7 +471,7 @@ void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn) {
 				add_move(X6);
 			}
 		}
-		else if((PB0to2 & 2) == 1) {
+		else if((PCInput & 32) == 32) {
 			if(turn == 0) {
 				add_move(O7);
 			}
@@ -476,7 +479,7 @@ void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn) {
 				add_move(X7);
 			}
 		}
-		else if((PB0to2 & 4) == 1) {
+		else if((PCInput & 1) == 1) {
 			if(turn == 0) {
 				add_move(O8);
 			}
@@ -516,11 +519,47 @@ int main (void)
 	/* Insert system clock initialization code here (sysclk_init()). */
 
 	board_init();	
-	
-		flash_led_short();
+	USART_Init(MYUBRR);
+	flash_led_short();
 
 	//launch_game();
 	
 	collect_move(0);
+	//PORTB = 0xff;
+    //DDRB &= ~32; //Specifies port b pin 5 as input from button
+    //DDRC &= ~35;
+    //static int counter = 0;
+    //static int toggle = 0;
+    //LightRed();
 	
+	/*
+	long GameState1 = 1;
+	long GameState2 = 2;
+
+    while(1)
+    {
+        if((PINB & 32) == 32)
+        {
+            switch(toggle){
+                case 0:
+                   toggle++;
+                   break;
+                case 1:
+                   toggle++;
+				   USART_Communicate_Boardstate(GameState1);
+				   	_delay_ms(5000);
+				   //PORTB = 0xff;
+                   break;
+                case 2:
+                   toggle = 0;
+				   USART_Communicate_Boardstate(GameState2);
+				   	_delay_ms(5000);
+					//PORTB = 0xff;
+                   break;
+            }
+        }
+    }
+	
+	*/
+	//test_USART();
 }
