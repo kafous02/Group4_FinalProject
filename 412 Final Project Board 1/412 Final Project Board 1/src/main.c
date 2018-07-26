@@ -91,6 +91,9 @@ const int XMovesLength = 9;
 const int OMovesLength = 9;
 
 typedef enum {
+	
+	NoWin = 0,
+
 	TopHorizO = O0 + O1 + O2,
 	MidHorizO = O3 + O4 + O5,
 	BotHorizO = O6 + O7 + O8,
@@ -121,7 +124,7 @@ void add_move(movelist ml);
 void delete_move(movelist ml);
 bool check_win(winlist wl);
 bool check_move(movelist wl);
-void check_full_board(void);
+winlist check_full_board(void);
 void print_win(void);
 void bot_move_X_random(void);
 void bot_move_O_random(void);
@@ -133,6 +136,7 @@ bool add_player_move(int move, int turn);
 void launch_pvp_game(void);
 void launch_pvb_game(void);
 void launch_bvb_game(void);
+void flash_win(winlist wl);
 
 void add_move(movelist ml) {
 		gamestate = gamestate + ml;
@@ -154,12 +158,29 @@ bool add_player_move(int move, int turn) {
 	
 	if((check_move(ml1) == false) && (check_move(ml2) == false)) {
 			gamestate = gamestate + ml1;
-			check_full_board();
-			
+			winlist checkWin = check_full_board();
+
+			if(checkWin != 0) {
+				flash_win(checkWin);
+			}			
+
 			return true;
 	}
-
 	return false;
+}
+
+void flash_win(winlist wl) {
+
+	while(true) {
+	
+		USART_Communicate_Boardstate(gamestate);
+		_delay_ms(10000);
+		gamestate -= wl;
+		USART_Communicate_Boardstate(gamestate);
+		gamestate += wl;
+		_delay_ms(10000);
+	
+	}
 }
 
 void delete_move(movelist ml) {
@@ -177,16 +198,17 @@ bool check_move(movelist wl) {
 	return false;
 }
 
-void check_full_board() {
+winlist check_full_board() {
 	for (int iter = 0; iter < WinListLength; iter++) {
 		if (check_win(winlistOarray[iter])) {
-			OWins = true;
+			
+			return winlistOarray[iter];
 		}
 		if (check_win(winlistXarray[iter])) {
-			XWins = true;
+			return winlistXarray[iter];
 		}
 	}
-	return;
+	return NoWin;
 }
 
 void print_win() {
