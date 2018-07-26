@@ -126,14 +126,14 @@ void bot_move_X_random(void);
 void bot_move_O_random(void);
 void bot_X_move(void);
 void bot_O_move(void);
-void add_turn_move(unsigned char PD2to7, unsigned char PB0to2, int turn);
+bool add_turn_move(unsigned char PBInput, unsigned char PCInput, int turn);
 
 void add_move(movelist ml) {
 		gamestate = gamestate + ml;
 	return;
 }
 
-void add_player_move(int move, int turn) {
+bool add_player_move(int move, int turn) {
 	
 	int offset = 0;
 	
@@ -148,9 +148,10 @@ void add_player_move(int move, int turn) {
 	
 	if((check_move(ml1) == false) && (check_move(ml2) == false)) {
 			gamestate = gamestate + ml1;
+			return true;
 	}
 
-	return;
+	return false;
 }
 
 void delete_move(movelist ml) {
@@ -411,7 +412,7 @@ void Test_Split_Long(void) {
 unsigned char PBInput = 0;
 unsigned char PCInput = 0;
 	
-void collect_move(int turn) {
+bool collect_move(int turn) {
 	
 	bool hasnotentered = true;
 	
@@ -428,81 +429,135 @@ void collect_move(int turn) {
 		}
 	}
 	
-	add_turn_move(PBInput, PCInput, turn);
+	return add_turn_move(PBInput, PCInput, turn);
 	
 }
 
-void add_turn_move(unsigned char PBInput, unsigned char PCInput, int turn) {
+bool add_turn_move(unsigned char PBInput, unsigned char PCInput, int turn) {
 		if((PBInput & 1) == 1) {
 			if(turn == 0) {
-				add_player_move(0,0);
+				if(add_player_move(0,0)) {
+					return true;
+				}
+				else return false;
 			}
 			else {
-				add_player_move(0,1);
+				if(add_player_move(0,1)) {
+					return true;
+				}
+				else return false;
 			}
 		}
 		else if((PBInput & 2) == 2) {
 			if(turn == 0) {
-				add_player_move(1,0);
+				if(add_player_move(1,0)) {
+					return true;
+				}
+				else return false;
 			}
 			else {
-				add_player_move(1,1);
+				if(add_player_move(1,1)) {
+					return true;
+				}
+				else return false;
 			}
 		}
 		else if((PBInput & 4) == 4) {
 			if(turn == 0) {
-				add_player_move(2,0);
+				if(add_player_move(2,0)) {
+					return true;
+				}
+				else return false;
 			}
 			else {
-				add_player_move(2,1);
+				if(add_player_move(2,1)) {
+					return true;
+				}
+				else return false;
 			}
 		}
 		else if((PBInput & 8) == 8) {
 			if(turn == 0) {
-				add_player_move(3,0);
+				if(add_player_move(3,0)) {
+					return true;
+				}
+				else return false;
 			}
 			else {
-				add_player_move(3,1);
+				if(add_player_move(3,1)) {
+					return true;
+				}
+				else return false;
 			}
 		}
 		else if((PBInput & 16) == 16) {
 			if(turn == 0) {
-				add_player_move(4,0);
+				if(add_player_move(4,0)) {
+					return true;
+				}
+				else return false;
 			}
 			else {
-				add_player_move(4,1);
+				if(add_player_move(4,1)) {
+					return true;
+				}
+				else return false;
 			}
 		}
 		else if((PBInput & 32) == 32) {
 			if(turn == 0) {
-				add_player_move(5,0);
+				 if(add_player_move(5,0)) {
+					 return true;
+				 }
+				 else return false;
 			}
 			else {
-				add_player_move(5,1);
+				if(add_player_move(5,1)) {
+					return true;
+				}
+				else return false;
 			}
 		}
 		else if((PCInput & 2) == 2) {
 			if(turn == 0) {
-				add_player_move(6,0);
+				if(add_player_move(6,0)) {
+					return true;
+				}
+				else return false;
 			}
 			else {
-				add_player_move(6,1);
+				if(add_player_move(6,1)){
+					return true;
+				}
+				else return false;
 			}
 		}
 		else if((PCInput & 32) == 32) {
 			if(turn == 0) {
-				add_player_move(7,0);
+				if(add_player_move(7,0)) {
+					return true;
+				}
+				else return false;
 			}
 			else {
-				add_player_move(7,1);
+				if(add_player_move(7,1)) {
+					return true;
+				}
+				else return false;
 			}
 		}
 		else if((PCInput & 1) == 1) {
 			if(turn == 0) {
-				add_player_move(8,0);
+				if(add_player_move(8,0)) {
+					return true;
+				}
+				else return false;
 			}
 			else {
-				add_player_move(8,1);
+				if(add_player_move(8,1)) {
+					return true;
+				}
+				else return false;
 			}
 		}
 }
@@ -513,10 +568,11 @@ void launch_game(void) {
 	
 	while(true) {
 		moveloop = moveloop % 2;
-		collect_move(moveloop);
+		if(collect_move(moveloop)) {
+			moveloop++;
+
+		}
 		USART_Communicate_Boardstate(gamestate);
-		moveloop++;
-		
 		_delay_ms(10000);
 	}
 }
